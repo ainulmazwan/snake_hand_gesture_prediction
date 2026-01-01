@@ -24,15 +24,18 @@ GRID_PLACEHOLDER = st.empty()
 model = joblib.load('./models/model3.joblib')
 
 if 'snake' not in st.session_state:
-        st.session_state.snake = [(5,5), (5,4), (5,3)]  # the "body parts" of the snake
-        st.session_state.food = (2,7)
+        st.session_state.snake = [(5,5), (5,4), (5,3)]  # initializing the "body parts" of the snake
+        st.session_state.food = (2,7)  # initializing the position of food
         st.session_state.last_move = time.time()
 
 
 
 
 direction = "RIGHT"
+st.session_state.direction = direction #initializing direction
+st.session_state.label = "wait.."
 
+st.write(f"Prediction:  {st.session_state.label} --- {st.session_state.direction}")
 
 while run:
     _, frame = camera.read()
@@ -55,28 +58,46 @@ while run:
         img_array = preprocess_input(img_array)
 
         # dict_keys(['fist', 'left', 'palm', 'right'])
-        class_names = ['UP', 'LEFT', 'DOWN', 'RIGHT']
+        direction_names = ['UP', 'LEFT', 'DOWN', 'RIGHT']
         pred  = model.predict(img_array)
     
         # pred will look like [0.1, 0.2, 0.6, 0.2]
         pred_idx = np.argmax(pred[0])            # index of highest probability
-        direction = class_names[pred_idx]             # class name
+        change_to = direction_names[pred_idx]             # class name
         conf = pred[0][pred_idx] * 100 
 
-        
 
-        if direction == "UP": 
+        if change_to == 'UP' and direction != 'DOWN':
+            direction = 'UP'
+        if change_to == 'DOWN' and direction != 'UP':
+            direction = 'DOWN'
+        if change_to == 'LEFT' and direction != 'RIGHT':
+            direction = 'LEFT'
+        if change_to == 'RIGHT' and direction != 'LEFT':
+            direction = 'RIGHT'
+        
+        if direction == 'UP':
             new_head = ((head_x+1) % rows, (head_y) % cols)  # % ensures that it doesnt go over the col/row limit, wrapping back to the start
-        elif direction == "DOWN":  
+        if direction == 'DOWN':
             new_head = ((head_x-1) % rows, (head_y) % cols)
-        elif direction == "RIGHT":  
-            new_head = ((head_x) % rows, (head_y+1) % cols)
-        elif direction == "LEFT":  
+        if direction == 'LEFT':
             new_head = ((head_x) % rows, (head_y-1) % cols)
+        if direction == 'RIGHT':
+            new_head = ((head_x) % rows, (head_y+1) % cols)
+              
+        
         
         
         st.session_state.snake.insert(0, new_head)
         st.session_state.snake.pop()
+
+        class_names =  ['fist', 'left', 'palm', 'right']
+        # dict_keys(['fist', 'left', 'palm', 'right'])
+        st.session_state.label = class_names[pred_idx] 
+
+        st.session_state.direction = direction
+
+        
 
         
     grid = [["⬜" for p in range(cols)] for p in range(rows)]
@@ -87,6 +108,7 @@ while run:
     grid[fx][fy] = "🍎"
 
     GRID_PLACEHOLDER.text("\n".join([" ".join(row) for row in grid]))
+
         
     time.sleep(0.1)
     
