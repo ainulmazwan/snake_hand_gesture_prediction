@@ -17,7 +17,10 @@ cols = 10
 
 st.title("Hand Gesture Controlled Snake Game")
 
-run = st.checkbox('Run')
+if "running" not in st.session_state:
+    st.session_state.running = False
+
+st.checkbox("Run", key="running")
 
 left_col, right_col = st.columns(2)
 
@@ -36,7 +39,7 @@ with right_col:
 camera = cv2.VideoCapture(0)
 
 
-model = joblib.load('../models/model3.joblib')
+model = joblib.load('./models/model4.joblib')
 
 if 'snake' not in st.session_state:
         st.session_state.snake = [(5,5), (5,4), (5,3)]  # initializing the "body parts" of the snake
@@ -53,13 +56,14 @@ st.session_state.label = "wait.."
 st.session_state.score = 0 # initializing score
 
 
-while run:
+while st.session_state.running:
     _, frame = camera.read()
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # convert to rgb, since cv2 shows frames in bgr
+    frame = cv2.flip(frame, 1) # my camera is mirrored, so have to flip image horizontally (1)
     FRAME_WINDOW.image(frame)
 
     SUBTITLE_PLACEHOLDER.markdown("Snake Game")
-    SCORE_PLACEHOLDER.markdown(st.session_state.score)
+    SCORE_PLACEHOLDER.markdown(f"Score: {st.session_state.score}")
 
     
 
@@ -105,8 +109,12 @@ while run:
         if direction == 'RIGHT':
             new_head = ((head_x) % rows, (head_y+1) % cols)
               
-        
-        
+        # check if snake hit its own body
+        if new_head in st.session_state.snake:
+            st.error("Game Over! Snake hit itself.")
+            st.session_state.running = False   # uncheck checkbox
+            st.stop()
+            break
         
         st.session_state.snake.insert(0, new_head)
         # check if food eaten
@@ -140,7 +148,8 @@ while run:
         )
     
 
-        
+
+    # fancy grid code by ChatGPT
     grid = [["⬜" for p in range(cols)] for p in range(rows)]
     for x, y in st.session_state.snake:
         grid[x][y] = "🟩"
@@ -153,4 +162,4 @@ while run:
         
     time.sleep(0.1)
     
-st.rerun()
+# st.rerun()

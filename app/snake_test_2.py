@@ -1,4 +1,4 @@
-
+window_x
 import pygame
 import time
 import random
