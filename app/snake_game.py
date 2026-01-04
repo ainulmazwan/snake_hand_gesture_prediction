@@ -112,6 +112,7 @@ while st.session_state.running:
         # check if snake hit its own body
         if new_head in st.session_state.snake:
             st.error("Game Over! Snake hit itself.")
+            st.session_state.snake = [(5,5), (5,4), (5,3)]
             st.session_state.running = False   # uncheck checkbox
             st.stop()
             break
